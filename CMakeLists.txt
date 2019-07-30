@@ -1,13 +1,13 @@
 cmake_minimum_required (VERSION 3.6)
 
 ## project details
-project(rad VERSION 1.4.1 LANGUAGES C)
+project(rad VERSION 1.4.2 LANGUAGES C)
 set(PROJECT_NAME_UPPER "RAD")
 set(PROJECT_BRIEF "Radial Attention Model")
 
 ## c compiler setup
 set(CMAKE_C_STANDARD 11)
-if(NOT CMAKE_BUILD_TYPE )
+if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release)
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
@@ -122,13 +122,27 @@ endforeach()
 ## add documentation target
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
+	if(MSVC)
+		set(PY_FILTER_DOCS "py_filter.bat")
+		set(MAKE_DOCS "${PROJECT_TEMP_DIR}/make_docs.bat")
+		file(COPY "${PROJECT_CONF_DIR}/make_docs.bat" DESTINATION "${PROJECT_TEMP_DIR}")
+	else()
+		set(PY_FILTER_DOCS "./py_filter")
+		set(MAKE_DOCS "${PROJECT_TEMP_DIR}/make_docs.sh")
+		file(
+			COPY "${PROJECT_CONF_DIR}/make_docs.sh" DESTINATION "${PROJECT_TEMP_DIR}" 
+			FILE_PERMISSIONS 
+			OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+		)
+	endif()
+
 	message(STATUS "Creating documentation target: ${PROJECT_NAME}_doc")
 	set(DOXYGEN_CONF ${PROJECT_TEMP_DIR}/${PROJECT_NAME}.doxy)
 	configure_file(${PROJECT_CONF_DIR}/${PROJECT_NAME}_doxy.cnf ${DOXYGEN_CONF} @ONLY)
 
 	add_custom_target(
 		${PROJECT_NAME}_doc
-		COMMAND source ${PROJECT_CONF_DIR}/make_docs ${PROJECT_DOCS_DIR} ${PYTHON_DIR}/${PROJECT_NAME}.ipynb ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONF}
+		COMMAND ${MAKE_DOCS} ${PROJECT_DOCS_DIR} ${PYTHON_DIR}/${PROJECT_NAME}.ipynb ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONF}
 		WORKING_DIRECTORY ${PROJECT_TEMP_DIR}
 		COMMENT "Generating documentation with Doxygen"
 		VERBATIM
