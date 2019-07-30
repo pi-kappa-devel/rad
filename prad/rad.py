@@ -12,9 +12,8 @@ from string import Template
 import glob
 import struct
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib
-from matplotlib import cm
+import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.ndimage.filters import gaussian_filter1d
 import plotly.graph_objs as go
@@ -222,7 +221,7 @@ class Variable:
         axes.set_xlabel("x")
         axes.set_ylabel("r")
         axes.plot_surface(
-            x_mesh, r_mesh, self.data, cmap=cm.coolwarm, linewidth=0, antialiased=False
+            x_mesh, r_mesh, self.data, cmap=rad_conf.RAD_FIG_CM, linewidth=0, antialiased=False
         )
         axes.view_init(30, fig_data["angle"])
         plt.show()
@@ -238,10 +237,11 @@ class Variable:
 
         fig = plt.figure()
         axes = fig.gca()
+        axes.set_prop_cycle(rad_conf.RAD_FIG_CYCLE)
         axes.set_ylabel(fig_data["zlabel"])
         axes.set_xlabel("x")
         for r_idx, r_val in enumerate(fig_data["rsections"]):
-            smoothed = gaussian_filter1d(self.data[r_val, :], sigma=2)
+            smoothed = gaussian_filter1d(self.data[r_val, :], sigma=1)
             axes.plot(self.x_grid.data, smoothed, label="$r_{}={:.2f}$".format(r_idx, self.r_grid.data[r_val]))
             if "rsections_points" in fig_data:
                 plt.plot(
@@ -266,10 +266,11 @@ class Variable:
 
         fig = plt.figure()
         axes = fig.gca()
+        axes.set_prop_cycle(rad_conf.RAD_FIG_CYCLE)
         axes.set_ylabel(fig_data["zlabel"])
         axes.set_xlabel("r")
         for x_idx, x_val in enumerate(fig_data["xsections"]):
-            smoothed = gaussian_filter1d(self.data[:, x_val], sigma=2)
+            smoothed = gaussian_filter1d(self.data[:, x_val], sigma=1)
             axes.plot(self.r_grid.data, smoothed, label="$x_{}={:.2f}$".format(x_idx, self.x_grid.data[x_val]))
             if "xsections_points" in fig_data:
                 plt.plot(
@@ -456,6 +457,7 @@ returns ($$R$$) & $$\frac{1}{\beta}$$ \\\bottomrule\bottomrule
 
         fig = plt.figure()
         axes = fig.gca()
+        axes.set_prop_cycle(rad_conf.RAD_FIG_CYCLE)
         axes.plot(sdom, np.ones(100), linestyle=":", color="black", linewidth=1)
         for r_idx, r_val in enumerate(rsections):
             axes.plot(sdom, self.specification["radt"]["fnc"](r_val, sdom), label="$r_{}={:.2f}$".format(r_idx, r_val))
@@ -477,6 +479,7 @@ returns ($$R$$) & $$\frac{1}{\beta}$$ \\\bottomrule\bottomrule
 
         fig = plt.figure()
         axes = fig.gca()
+        axes.set_prop_cycle(rad_conf.RAD_FIG_CYCLE)
         for r_idx, r_val in enumerate(rsections):
             axes.plot(sdom, self.specification["cost"]["fnc"](r_val, sdom), label="$r_{}={:.2f}$".format(r_idx, r_val))
         plt.legend(loc="best")
@@ -523,6 +526,7 @@ class ParameterDependence:
 
         fig = plt.figure()
         axes = fig.gca()
+        axes.set_prop_cycle(rad_conf.RAD_FIG_CYCLE)
         axes.set_xlabel("$\\{}$".format(self.parameter_string))
         axes.set_ylabel(ylab[0])
         for r_idx in range(0, len(domain_data["r_indices"])):
