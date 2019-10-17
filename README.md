@@ -1,6 +1,6 @@
 ## Synopsis
 
-This is the top-level-element documentation of the code that accompanies the numerical section of the article 
+This is the top-level element-documentation of the code that accompanies the numerical section of the article 
 [Costly Consideration and Dynamic Choice Set Formation](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3423876) 
 (henceforth the article). 
 
