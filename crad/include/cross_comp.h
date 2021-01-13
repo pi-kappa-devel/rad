@@ -8,29 +8,28 @@
 #define _CC_MACROS_H_
 
 #if defined(__unix__)
-  #define CCM_FILE_SYSTEM_SEP "/"
+#define CCM_FILE_SYSTEM_SEP "/"
 
 int mkdirp(const char *path, int mode);
 
 #elif defined(_WIN32) || defined(_WIN64)
-  #define CCM_FILE_SYSTEM_SEP "\\"
+#define CCM_FILE_SYSTEM_SEP "\\"
 
-  #define _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 
-  #define __PRETTY_FUNCTION__ __FUNCSIG__  
+#define __PRETTY_FUNCTION__ __FUNCSIG__
 
-  #define mkdirp(path, mode) mkdirp_w(path)
+#define mkdirp(path, mode) mkdirp_w(path)
 
 int mkdirp_w(const char *path);
 
-  #define localtime_r(prawtime, ptm) localtime_s(ptm, prawtime);
-  #define asctime_r(ptm, timestamp) asctime_s(timestamp, 26, ptm);
+#define localtime_r(prawtime, ptm) localtime_s(ptm, prawtime);
+#define asctime_r(ptm, timestamp) asctime_s(timestamp, 26, ptm);
 
 #else
-  #error Operating system is not supported.
+#error Operating system is not supported.
 
 #endif /* __unix__ */
-
 
 /* Stringification macros */
 

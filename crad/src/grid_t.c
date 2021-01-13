@@ -1,27 +1,27 @@
 #include "grid_t.h"
 
-#include "logger.h"
 #include "cross_comp.h"
+#include "logger.h"
 
-#include "math.h"
-#include "stdlib.h"
-#include "stdio.h"
 #include "assert.h"
+#include "math.h"
+#include "stdio.h"
+#include "stdlib.h"
 #include "string.h"
 
 #include "errno.h"
 
 #ifndef GRID_T_INIT_STR_MASK
-  #define GRID_T_INIT_STR_MASK "%d, %lf, %lf, %lf"
+#define GRID_T_INIT_STR_MASK "%d, %lf, %lf, %lf"
 #endif
 
-void alloc_grid(grid_t* g) {
-	g->d = (double*)malloc(sizeof(double)*(g->n));
+void alloc_grid(grid_t *g) {
+  g->d = (double *)malloc(sizeof(double) * (g->n));
 #ifdef GRID_T_SAFE_MODE
-	if(!g->d) {
-		LOGE("Failed to allocated memory for grid data");
-		exit(EXIT_FAILURE);
-	}
+  if (!g->d) {
+    LOGE("Failed to allocated memory for grid data");
+    exit(EXIT_FAILURE);
+  }
 #endif
 }
 
@@ -33,13 +33,13 @@ void alloc_grid(grid_t* g) {
  * @param m Minimum grid point
  * @param M Maximum grid point
  * @param w Weighting exponent */
-void grid_init(grid_t* g, short n, double m, double M, double w) {
-	g->n = n;
-	g->m = m;
-	g->M = M;
-	g->w = w;
-	alloc_grid(g);
-	grid_calc(g);
+void grid_init(grid_t *g, short n, double m, double M, double w) {
+  g->n = n;
+  g->m = m;
+  g->M = M;
+  g->w = w;
+  alloc_grid(g);
+  grid_calc(g);
 }
 
 /** @brief Grid initialization from string
@@ -47,36 +47,41 @@ void grid_init(grid_t* g, short n, double m, double M, double w) {
  * init_grid() using the parsed data.
  * @param g Output grid object
  * @param init_str Initialization string */
-void grid_init_str(grid_t* g, const char* init_str) {
-	size_t len = strlen(init_str);
-	char* buf = (char*)calloc(len, sizeof(char));
-	memcpy(buf, init_str, len);
-	char* pbuf;
-	
-	pbuf = strtok(buf, ",");
-	if (pbuf) g->n = (short)atoi(pbuf);
-	pbuf = strtok(NULL, ",");
-	if (pbuf) g->m = atof(pbuf);
-	pbuf = strtok(NULL, ",");
-	if (pbuf) g->M = atof(pbuf);
-	pbuf = strtok(NULL, ",");
-	if (pbuf) g->w = atof(pbuf);
-	else g->w = 1; 
+void grid_init_str(grid_t *g, const char *init_str) {
+  size_t len = strlen(init_str);
+  char *buf = (char *)calloc(len, sizeof(char));
+  memcpy(buf, init_str, len);
+  char *pbuf;
 
-	free(buf);
+  pbuf = strtok(buf, ",");
+  if (pbuf)
+    g->n = (short)atoi(pbuf);
+  pbuf = strtok(NULL, ",");
+  if (pbuf)
+    g->m = atof(pbuf);
+  pbuf = strtok(NULL, ",");
+  if (pbuf)
+    g->M = atof(pbuf);
+  pbuf = strtok(NULL, ",");
+  if (pbuf)
+    g->w = atof(pbuf);
+  else
+    g->w = 1;
 
-	alloc_grid(g);
-	grid_calc(g);
+  free(buf);
+
+  alloc_grid(g);
+  grid_calc(g);
 }
 
 /** @brief Grid copy
  * @details Performs a deep copy of one grid to another.
  * @param dest Destination grid
  * @param source Source grid */
-void grid_copy(grid_t* dest, const grid_t* source) {
-	memcpy(dest, source, sizeof(*source));
-	dest->d = (double*)calloc(dest->n,sizeof(double));
-	memcpy(dest->d, source->d, dest->n*sizeof(double));
+void grid_copy(grid_t *dest, const grid_t *source) {
+  memcpy(dest, source, sizeof(*source));
+  dest->d = (double *)calloc(dest->n, sizeof(double));
+  memcpy(dest->d, source->d, dest->n * sizeof(double));
 }
 
 /** Grid calculation
@@ -90,19 +95,19 @@ void grid_copy(grid_t* dest, const grid_t* source) {
  * exponent g.w. The weighting function is applied to an equidistant
  * distribution on \f$ [0,1] \f$ and is then mapped to the grid's domain.
  * @param g Output grid object */
-void grid_calc(grid_t* g) {
+void grid_calc(grid_t *g) {
 #ifdef GRID_T_SAFE_MODE
-	if(!(g->M>g->m)) {
-		LOGE("Invalid grid domain definition");
-	}
-	if(!(g->w>0)) {
-		LOGE("Invalid grid weighting exponent");
-	}
+  if (!(g->M > g->m)) {
+    LOGE("Invalid grid domain definition");
+  }
+  if (!(g->w > 0)) {
+    LOGE("Invalid grid weighting exponent");
+  }
 #endif
-	double h = (g->M-g->m)/pow(g->n-1,g->w);
-	for(int i=0; i<g->n; ++i) {
-		g->d[i] = g->m + pow(i,g->w)*h;
-	}
+  double h = (g->M - g->m) / pow(g->n - 1, g->w);
+  for (int i = 0; i < g->n; ++i) {
+    g->d[i] = g->m + pow(i, g->w) * h;
+  }
 }
 
 /** @brief Binary save
@@ -119,21 +124,21 @@ void grid_calc(grid_t* g) {
  * @param filename Output file name
  * @return Zero on success. If GRID_T_SAFE_MODE, it returns -1 if it fails to
  * open the output file. */
-int grid_save(const grid_t* g, const char* filename) {
-	FILE *fh = NULL;
-	fh = fopen(filename, "wb");
+int grid_save(const grid_t *g, const char *filename) {
+  FILE *fh = NULL;
+  fh = fopen(filename, "wb");
 #ifdef GRID_T_SAFE_MODE
-	if(!fh) {
-		LOGE("Failed to create '%f' with errno %d", filename, errno);
-		return errno;
-	}
+  if (!fh) {
+    LOGE("Failed to create '%f' with errno %d", filename, errno);
+    return errno;
+  }
 #endif
-	fwrite(&g->n, sizeof(g->n), 1, fh);
-	fwrite(&g->w, sizeof(g->w), 1, fh);
-	fwrite(g->d, sizeof(g->m), g->n, fh);
-	fclose(fh);
+  fwrite(&g->n, sizeof(g->n), 1, fh);
+  fwrite(&g->w, sizeof(g->w), 1, fh);
+  fwrite(g->d, sizeof(g->m), g->n, fh);
+  fclose(fh);
 
-	return 0;
+  return 0;
 }
 
 /** @brief Binary load
@@ -144,34 +149,32 @@ int grid_save(const grid_t* g, const char* filename) {
  * @param filename Output file name
  * @return Zero on success. If GRID_T_SAFE_MODE, it returns -1 if it fails to
  * open the input file. */
-int grid_load(grid_t* g, const char* filename) {
-	FILE *fh = NULL;
-	fh = fopen(filename, "rb");
+int grid_load(grid_t *g, const char *filename) {
+  FILE *fh = NULL;
+  fh = fopen(filename, "rb");
 #ifdef GRID_T_SAFE_MODE
-	if(!fh) {
-		LOGE("Failed to open '%f' with errno %d", filename, errno);
-		return errno;
-	}
+  if (!fh) {
+    LOGE("Failed to open '%f' with errno %d", filename, errno);
+    return errno;
+  }
 #endif
-	fread(&g->n, sizeof(g->n), 1, fh);
-	fread(&g->w, sizeof(g->w), 1, fh);
-	if(g->n>0) {
-		alloc_grid(g);
-		fread(g->d, sizeof(g->m), g->n, fh);
-		g->m = g->d[0];
-		g->M = g->d[g->n-1];
-	}
-	fclose(fh);
+  fread(&g->n, sizeof(g->n), 1, fh);
+  fread(&g->w, sizeof(g->w), 1, fh);
+  if (g->n > 0) {
+    alloc_grid(g);
+    fread(g->d, sizeof(g->m), g->n, fh);
+    g->m = g->d[0];
+    g->M = g->d[g->n - 1];
+  }
+  fclose(fh);
 
-	return 0;
+  return 0;
 }
 
 /** @brief Grid disallocation
  * @details Frees grid's data array.
  * @param g Output grid object*/
-void grid_free(grid_t* g) {
-	free(g->d);
-}
+void grid_free(grid_t *g) { free(g->d); }
 
 /** @brief Lower interpolation-extrapolation index
  * @details Searches the grid array for the greatest domain value that is
@@ -182,19 +185,23 @@ void grid_free(grid_t* g) {
  * assumes that the data array of the grid object has at least two values.
  * @param g Grid object
  * @param X Domain value. */
-short grid_liei(const grid_t* g, double X) {
-  short li = 0, ui = g->n, mi = (g->n%2)? (g->n+1)/2 : g->n/2;
+short grid_liei(const grid_t *g, double X) {
+  short li = 0, ui = g->n, mi = (g->n % 2) ? (g->n + 1) / 2 : g->n / 2;
 
-	if (X <= g->m) mi = 0;
-	else if (X > g->M) mi = g->n - 2;
-	else {
-		while (ui - li > 1) {
-			if (X < g->d[mi]) ui = mi;
-			else li = mi;
-			mi = (ui + li) / 2;
-		}
-		assert(X >= g->d[mi] && X < g->d[mi + 1]);
-	}
+  if (X <= g->m)
+    mi = 0;
+  else if (X > g->M)
+    mi = g->n - 2;
+  else {
+    while (ui - li > 1) {
+      if (X < g->d[mi])
+        ui = mi;
+      else
+        li = mi;
+      mi = (ui + li) / 2;
+    }
+    assert(X >= g->d[mi] && X < g->d[mi + 1]);
+  }
 
-	return mi;
+  return mi;
 }

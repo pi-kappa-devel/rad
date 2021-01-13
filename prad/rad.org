@@ -1,0 +1,194 @@
+#+option: toc:nil, num:nil
+#+TITLE: Radial Attention Model
+
+#+latex_header: \usepackage{booktabs}\usepackage{multirow}\usepackage{subcaption}\usepackage{tabularx}\usepackage{arydshln}
+#+html_head: <style> #content { width: 80%; margin: auto; } img { width: 75%;} </style>
+
+#+begin_src python :session :results none
+  import os
+  import numpy as np
+
+  import rad_conf
+  from rad import RadialAttentionModel, ParameterDependence
+
+  print("Loading input from '{}'.".format(rad_conf.RAD_DATA_DIR.split('/')[-1]))
+  print("Saving output in '{}'.".format(rad_conf.RAD_TEMP_DIR.split('/')[-1]))
+  
+  model = RadialAttentionModel("msol")
+
+  rsections = [.1, .5, .7, .9]
+  xsections = [10.0, 20., 50.0, 100.0]
+
+  rsections_indices = model.grids["r"].lower_bound_index(rsections)
+  rsections_points = {}
+  for r_ind, r_val in enumerate(rsections_indices):
+      idx = np.where(model.variables["s"].data[r_val, :] <= 0)[0][-1]
+      rsections_points[r_ind] = ("$\\bar x (r_{})$".format(r_ind), (model.grids["x"].data[idx], 0))
+
+  xsections_indices = model.grids["x"].lower_bound_index(xsections)
+  xsections_points = {}
+  for x_ind, x_val in enumerate(xsections_indices):
+      idx = np.where(model.variables["s"].data[:, x_val] <= 0)[0][0]
+      xsections_points[x_ind] = ("$\\bar r (x_{})$".format(x_ind), (model.grids["r"].data[idx], 0))
+#+end_src
+
+#+begin_src python :session :results none
+  model.save_learning_rsections()
+#+end_src
+
+#+caption: Learning radius sections
+file:../tmp/l_rsections.png
+
+#+begin_src python :session :results none
+  model.save_cost_rsections()
+#+end_src
+
+#+caption: Cost radius sections
+[[file:../tmp/c_rsections.png]]
+
+#+begin_src python :session :results none
+  model.variables["s"].save_figs({
+      "angle": 215,
+      "zlabel": "s",
+      "prefix": "spol",
+      "xsections": xsections,
+      "xsections_points": xsections_points,
+      "rsections": rsections,
+      "rsections_points": rsections_points
+  })
+#+end_src
+
+#+caption: Optimal effort control surface 
+[[file:../tmp/spol_surf.png]]
+
+#+caption: Optimal effort control radius sections
+file:../tmp/spol_rsections.png
+
+#+caption: Optimal effort control wealth sections
+file:../tmp/spol_xsections.png
+
+#+begin_src python :session :results none
+  model.variables["q"].save_figs({
+      "angle": 215,
+      "zlabel": "q",
+      "prefix": "qpol",
+      "xsections": [1.0, 2., 4.0, 40.0],
+      "rsections": [.1, .2, .5, .8]
+  })
+#+end_src
+
+#+caption: Optimal quantity control surface 
+[[file:../tmp/qpol_surf.png]]
+
+#+caption: Optimal quantity control radius sections
+file:../tmp/qpol_rsections.png
+
+#+caption: Optimal quantity control wealth sections
+file:../tmp/qpol_xsections.png
+
+#+begin_src python :session :results none
+  model.variables["v1"].save_figs({
+      "angle": 215,
+      "zlabel": "v",
+      "prefix": "v"
+  })
+#+end_src
+
+#+caption: Value function surface 
+[[file:../tmp/v_surf.png]]
+
+#+caption: Value function radius sections
+file:../tmp/v_rsections.png
+
+#+caption: Value function wealth sections
+file:../tmp/v_xsections.png
+
+#+begin_src python :session :results none
+  model.get_radius_dynamics().save_figs({
+      "angle": 215,
+      "zlabel": "r'",
+      "prefix": "radt"
+  })
+#+end_src
+
+#+caption: Radius dynamics surface 
+[[file:../tmp/radt_surf.png]]
+
+#+caption: Radius dynamics radius sections
+file:../tmp/radt_rsections.png
+
+#+caption: Radius dynamics wealth sections
+file:../tmp/radt_xsections.png
+
+#+begin_src python :session :results none
+  model.get_wealth_dynamics().save_figs({
+      "angle": 215,
+      "zlabel": "x'",
+      "prefix": "wltt"
+  })
+#+end_src
+
+#+caption: Wealth dynamics surface 
+[[file:../tmp/wltt_surf.png]]
+
+#+caption: Wealth dynamics radius sections
+file:../tmp/wltt_rsections.png
+
+#+caption: Wealth dynamics wealth sections
+file:../tmp/wltt_xsections.png
+
+#+begin_src python :session :results none
+  model.save_latex_table("msol.tex")
+#+end_src
+
+#+begin_src latex :export none hh:results none file :output-dir "../tmp" :file parameterization.png 
+  \begin{figure}
+  \input{../tmp/msol}
+  \end{figure}
+#+end_src
+
+#+RESULTS:
+#+begin_export latex
+#+end_export
+
+#+caption: Parameterization of dependence analysis 
+[[file:../tmp/parameterization.png]]
+
+#+begin_src python :session :results none
+  ParameterDependence("delta").save_figs()
+#+end_src
+
+#+caption: Dependence of effort control on \delta 
+[[file:../tmp/delta_on_spol.png]]
+
+#+caption: Dependence of quantity control on \delta
+file:../tmp/delta_on_qpol.png
+
+#+caption: Dependence of value function control on \delta
+file:../tmp/delta_on_v.png
+
+#+begin_src python :session :results none
+  ParameterDependence("alpha").save_figs()
+#+end_src
+
+#+caption: Dependence of effort control on \alpha
+[[file:../tmp/alpha_on_spol.png]]
+
+#+caption: Dependence of quantity control on \alpha
+file:../tmp/alpha_on_qpol.png
+
+#+caption: Dependence of value function control on \alpha
+file:../tmp/alpha_on_v.png
+
+#+begin_src python :session :results none
+  ParameterDependence("gamma").save_figs()
+#+end_src
+
+#+caption: Dependence of effort control on \gamma
+[[file:../tmp/gamma_on_spol.png]]
+
+#+caption: Dependence of quantity control on \gamma
+file:../tmp/gamma_on_qpol.png
+
+#+caption: Dependence of value function control on \gamma
+file:../tmp/gamma_on_v.png

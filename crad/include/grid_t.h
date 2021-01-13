@@ -16,32 +16,32 @@
  * grid's domain. The weighting is performed using a power function. The
  * weighting parameter is expected to be positive. */
 struct grid_st {
-	/** @brief Number of grid points */
-	short n;
-	/** @brief Minimum grid point */
-	double m;
-	/** @brief Maximum grid point */
-	double M;
-	/** @brief Weighting exponent */
-	double w;
-	/** @brief Data */
-	double* d;
+  /** @brief Number of grid points */
+  short n;
+  /** @brief Minimum grid point */
+  double m;
+  /** @brief Maximum grid point */
+  double M;
+  /** @brief Weighting exponent */
+  double w;
+  /** @brief Data */
+  double *d;
 };
 /** @brief Grid type */
 typedef struct grid_st grid_t;
 
-void grid_init(grid_t* g, short n, double m, double M, double w);
-void grid_init_str(grid_t* g, const char* init_str);
+void grid_init(grid_t *g, short n, double m, double M, double w);
+void grid_init_str(grid_t *g, const char *init_str);
 
-void grid_copy(grid_t* dest, const grid_t* source);
+void grid_copy(grid_t *dest, const grid_t *source);
 
-void grid_calc(grid_t* g);
+void grid_calc(grid_t *g);
 
-int grid_save(const grid_t* g, const char* filename);
-int grid_load(grid_t* g, const char* filename);
+int grid_save(const grid_t *g, const char *filename);
+int grid_load(grid_t *g, const char *filename);
 
-void grid_free(grid_t* g);
+void grid_free(grid_t *g);
 
-short grid_liei(const grid_t* g, double X);
+short grid_liei(const grid_t *g, double X);
 
 #endif /* GRID_T_H_ */

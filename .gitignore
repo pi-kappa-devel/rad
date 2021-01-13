@@ -15,10 +15,12 @@ bin/*
 docs/*
 *_conf.h
 *_conf.py
+prad/*.html
 
 #########################################
 # temp files
 #########################################
+.clangd/*
 build/*
 tmp/*
 *~
@@ -28,3 +30,17 @@ tmp/*
 #########################################
 *__pycache__/
 *.ipynb_checkpoints/
+
+#########################################
+# local configuration files
+#########################################
+/.clang-format
+/setup.cfg
+compile_commands.json
+
+#########################################
+# local data
+#########################################
+data/*
+!data/main.prm
+!data/pardep.prm

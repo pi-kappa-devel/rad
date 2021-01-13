@@ -10,9 +10,7 @@
  * \f]
  * @param v Objective function data
  * @return Calculated next date's radius. */
-double radt(const struct objvar_st* v){
-	return _radt_;
-}
+double radt(const struct objvar_st *v) { return _radt_; }
 
 /** @brief Temporal utility
  * @details Calculates the temporal utility by
@@ -22,9 +20,7 @@ double radt(const struct objvar_st* v){
  * @param v Objective function data
  * @return Calculated temporal utility.
  * @see radt(const objvar_t*) */
-double util(const struct objvar_st* v) {
-	return _util_;
-}
+double util(const struct objvar_st *v) { return _util_; }
 
 /** @brief Attentional costs
  * @details Calculates the attentional costs by
@@ -34,9 +30,7 @@ double util(const struct objvar_st* v) {
  * @param v Objective function data
  * @return Calculated costs.
  * @see radt(const objvar_t*) */
-double cost(const struct objvar_st* v) {
-	return _cost_;
-}
+double cost(const struct objvar_st *v) { return _cost_; }
 
 /** @brief Wealth transition
  * @details Calculates the next date's wealth
@@ -46,6 +40,4 @@ double cost(const struct objvar_st* v) {
  * @param v Objective function data
  * @return Calculated costs.
  * @see radt(const objvar_t*) */
-double wltt(const struct objvar_st* v) {
-	return _wltt_;
-}
+double wltt(const struct objvar_st *v) { return _wltt_; }
