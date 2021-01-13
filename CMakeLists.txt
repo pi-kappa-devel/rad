@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.6)
 
 ## project details
-project(rad VERSION 1.4.3 LANGUAGES C)
+project(rad VERSION 1.4.4 LANGUAGES C)
 set(PROJECT_NAME_UPPER "RAD")
 set(PROJECT_BRIEF "Radial Attention Model")
 
