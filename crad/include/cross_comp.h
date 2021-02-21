@@ -7,7 +7,7 @@
 #ifndef _CC_MACROS_H_
 #define _CC_MACROS_H_
 
-#if defined(__unix__)
+#if defined(__unix__) || defined(__APPLE__)
 #define CCM_FILE_SYSTEM_SEP "/"
 
 int mkdirp(const char *path, int mode);

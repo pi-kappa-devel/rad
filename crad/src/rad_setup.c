@@ -14,15 +14,12 @@
 #include "stdlib.h"
 #include "string.h"
 
+#if RAD_NUM_THREADS > 0
+#include "threads.h"
+#endif
+
 #if __unix__
 #include "dirent.h"
-#if RAD_NUM_THREADS > 0
-#include "pthread.h"
-#endif
-#else
-#include "tchar.h"
-#include "wchar.h"
-#include "windows.h"
 #endif
 
 #define LM_LEVEL 6
@@ -49,12 +46,8 @@ struct worker_st {
   range_t r;
 
 #if RAD_NUM_THREADS > 0
-#if __unix__
   /** @brief System thread*/
-  pthread_t thread;
-#else
-  HANDLE thread;
-#endif
+  thrd_t thread;
 #endif /* RAD_NUM_THREADS */
 };
 typedef struct worker_st worker_t;
@@ -76,20 +69,13 @@ struct concurrency_st {
   double accbuf;
 
 #if RAD_NUM_THREADS > 0
-#if __unix__
-  /** @brief Thread attributes */
-  pthread_attr_t attr;
   /** @brief Mutex */
-  pthread_mutex_t mtx;
+  mtx_t mtx;
   /** @brief Iteration done condition */
-  pthread_cond_t it_done;
+  cnd_t it_done;
   /** @brief Next iteration ready condition */
-  pthread_cond_t next_ready;
-#else
-  CRITICAL_SECTION mtx;
-  CONDITION_VARIABLE it_done;
-  CONDITION_VARIABLE next_ready;
-#endif
+  cnd_t next_ready;
+
   /** @brief Iteration done count */
   short it_done_count;
   /** @brief Next iteration ready flag */
@@ -262,51 +248,27 @@ void copybufs(thread_init_t *td) {
 }
 
 void lock_mutex(thread_init_t *td) {
-#if __unix__
-  pthread_mutex_lock(&td->u->c->mtx);
-#else
-  EnterCriticalSection(&td->u->c->mtx);
-#endif
+  mtx_lock(&td->u->c->mtx);
 }
 
 void wait_next_ready(thread_init_t *td) {
-#if __unix__
-  pthread_cond_wait(&td->u->c->next_ready, &td->u->c->mtx);
-#else
-  SleepConditionVariableCS(&td->u->c->next_ready, &td->u->c->mtx, INFINITE);
-#endif
+  cnd_wait(&td->u->c->next_ready, &td->u->c->mtx);
 }
 
 void wait_it_done(thread_init_t *td) {
-#if __unix__
-  pthread_cond_wait(&td->u->c->it_done, &td->u->c->mtx);
-#else
-  SleepConditionVariableCS(&td->u->c->it_done, &td->u->c->mtx, INFINITE);
-#endif
+  cnd_wait(&td->u->c->it_done, &td->u->c->mtx);
 }
 
 void signal_done(thread_init_t *td) {
-#if __unix__
-  pthread_cond_signal(&td->u->c->it_done);
-#else
-  WakeConditionVariable(&td->u->c->it_done);
-#endif
+  cnd_signal(&td->u->c->it_done);
 }
 
 void broadcast_ready(thread_init_t *td) {
-#if __unix__
-  pthread_cond_broadcast(&td->u->c->next_ready);
-#else
-  WakeAllConditionVariable(&td->u->c->next_ready);
-#endif
+  cnd_broadcast(&td->u->c->next_ready);
 }
 
 void unlock_mutex(thread_init_t *td) {
-#if __unix__
-  pthread_mutex_unlock(&td->u->c->mtx);
-#else
-  LeaveCriticalSection(&td->u->c->mtx);
-#endif
+  mtx_unlock(&td->u->c->mtx);
 }
 
 void worker_sync(thread_init_t *td) {
@@ -344,12 +306,7 @@ void free_thread_init(thread_init_t *td) {
   free(td->v0buf);
 }
 
-#if __unix__
-void *thread_start(void *vtd)
-#else
-DWORD WINAPI thread_start(PVOID vtd)
-#endif
-{
+int thread_start(void *vtd) {
 #if RAD_NUM_THREADS > 0
   thread_init_t *td = (thread_init_t *)vtd;
 
@@ -372,19 +329,10 @@ DWORD WINAPI thread_start(PVOID vtd)
   free(td);
 #endif /* RAD_NUM_THREADS */
 
-#if __unix__
-  pthread_exit(EXIT_SUCCESS);
-#else
-  return 0;
-#endif
+  thrd_exit(EXIT_SUCCESS);
 }
 
-#if __unix__
-void *thread_resume(void *vtd)
-#else
-DWORD WINAPI thread_resume(PVOID vtd)
-#endif
-{
+int thread_resume(void *vtd) {
 #if RAD_NUM_THREADS > 0
   thread_init_t *td = (thread_init_t *)vtd;
 
@@ -406,11 +354,7 @@ DWORD WINAPI thread_resume(PVOID vtd)
   free(td);
 #endif /* RAD_NUM_THREADS */
 
-#if __unix__
-  pthread_exit(EXIT_SUCCESS);
-#else
-  return 0;
-#endif
+  thrd_exit(EXIT_SUCCESS);
 }
 
 /** Initialize pipeline
@@ -457,24 +401,13 @@ void init_pipeline(setup_t *u) {
 }
 
 int join_thread(const setup_t *u, int i) {
-#if __unix__
-  return pthread_join(u->c->w[i].thread, NULL);
-#else
-  WaitForSingleObject(&u->c->w[i].thread, INFINITE);
-  return 0;
-#endif
+  return thrd_join(u->c->w[i].thread, NULL);
 }
 
 void free_sync_resources(setup_t *u) {
-#if __unix__
-  pthread_attr_destroy(&u->c->attr);
-
-  pthread_cond_destroy(&u->c->next_ready);
-  pthread_cond_destroy(&u->c->it_done);
-  pthread_mutex_destroy(&u->c->mtx);
-#else
-  DeleteCriticalSection(&u->c->mtx);
-#endif
+  cnd_destroy(&u->c->next_ready);
+  cnd_destroy(&u->c->it_done);
+  mtx_destroy(&u->c->mtx);
 }
 
 void join_all_threads(const setup_t *u) {
@@ -511,41 +444,18 @@ void setup_save(const setup_t *u, const char *setup_path) {
 }
 
 void init_sync_resources(setup_t *u) {
-#if __unix__
-  int ec = pthread_attr_init(&u->c->attr);
-  if (ec) {
-    LOGE("Failed to create thread attributes with code %d", ec);
-  }
-  pthread_attr_setdetachstate(&u->c->attr, PTHREAD_CREATE_JOINABLE);
+  mtx_init(&u->c->mtx, mtx_plain);
+  cnd_init(&u->c->it_done);
+  cnd_init(&u->c->next_ready);
 
-  pthread_mutex_init(&u->c->mtx, NULL);
-  pthread_cond_init(&u->c->it_done, NULL);
-  pthread_cond_init(&u->c->next_ready, NULL);
-#else
-  InitializeCriticalSection(&u->c->mtx);
-  InitializeConditionVariable(&u->c->it_done);
-  InitializeConditionVariable(&u->c->next_ready);
-#endif
   u->c->it_done_count = 0;
   u->c->is_next_ready = false;
 }
 
-#if __unix__
-typedef void *(thead_init_callback)(void *);
-#else
-typedef LPTHREAD_START_ROUTINE thead_init_callback;
-#endif
-
-void create_thread(thread_init_t *td, int i, thead_init_callback thread_main) {
+void create_thread(thread_init_t *td, int i, thrd_start_t thread_main) {
   int status = 0;
-#if __unix__
-  status =
-      pthread_create(&td->u->c->w[i].thread, &td->u->c->attr, thread_main, td);
-#else
-  td->u->c->w[i].thread =
-      CreateThread(NULL, 0, thread_main, (PVOID)td, 0, NULL);
-  status = td->u->c->w[i].thread == NULL;
-#endif
+  status = thrd_create(&td->u->c->w[i].thread, thread_main, td);
+
   if (status != 0) {
     LOGE("Failed to create thread %d", status);
   }

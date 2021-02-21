@@ -11,11 +11,9 @@
 #ifdef __unix__
 #define lock_output_buffer(buffer) flockfile(buffer)
 #define unlock_output_buffer(buffer) funlockfile(buffer)
-#define _LOG_THIS_THREAD_ID (unsigned long)pthread_self()
 #else
 #define lock_output_buffer(buffer) _lock_file(buffer)
 #define unlock_output_buffer(buffer) _unlock_file(buffer)
-#define _LOG_THIS_THREAD_ID
 #endif /* __unix__ */
 
 /* Create log mode strings */
@@ -25,7 +23,7 @@
 #define _LOG_VERB_TAG "Verbose       : "
 #define _LOG_DEBUG_TAG "Debug         : "
 #define _LOG_FUNCTION_TAG "Function      : "
-#define _LOG_THREAD_TAG "Thread %ld : ", _LOG_THIS_THREAD_ID
+#define _LOG_THREAD_TAG "Thread %d : ", thrd_current()
 
 /* Set log buffers */
 #define _LOG_ERROR_BUFFER stderr

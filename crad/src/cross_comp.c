@@ -4,7 +4,7 @@
 #include "stdio.h"
 #include "string.h"
 
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
 
 #include "sys/stat.h"
 #include "sys/types.h"
