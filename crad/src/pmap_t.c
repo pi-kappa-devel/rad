@@ -24,6 +24,21 @@
 #define PMAP_T_PARAM_BUFFER_SZ 128
 #endif
 
+#if PMAP_SAFE_MODE
+
+#define pmap_fopen(fh, filename, modes, errno)                                 \
+  fh = fopen(filename, modes);                                                 \
+  if (!fh) {                                                                   \
+    LOGE("Failed to open '%f' with errno %d", filename, errno);                \
+    return errno;                                                              \
+  }
+
+#else
+
+#define pmap_fopen(fh, filename, modes, errno) fh = fopen(filename, modes);
+
+#endif /* RAD_SAFE_MODE */
+
 struct pmap_pair_st {
   char key[PMAP_T_PARAM_KEY_SZ];
   char value[PMAP_T_PARAM_VALUE_SZ];
@@ -59,13 +74,7 @@ int pmap_init(pmap_t *pmap, const char *pfilename) {
   pmap->p = NULL;
   pmap->n = 0;
 
-  fh = fopen(pfilename, "r");
-#ifdef PMAP_T_SAFE_MODE
-  if (!fh) {
-    LOGE("Failed to open '%s' with error %d", pfilename, errno);
-    return -1;
-  }
-#endif /* PMAP_T_SAFE_MODE */
+  pmap_fopen(fh, pfilename, "r", errno);
 
   while (!feof(fh)) {
     if (fgets(buf, PMAP_T_PARAM_BUFFER_SZ, fh) != NULL) {
@@ -141,13 +150,7 @@ void pmap_add_double(pmap_t *pmap, const char *key, double val) {
  * @param pfilename Filename */
 void pmap_save(const pmap_t *pmap, const char *pfilename) {
   FILE *fh;
-  fh = fopen(pfilename, "w");
-#if PMAP_T_SAFE_MODE
-  if (!fh) {
-    LOGE("Failed to create file '%s' with error %d", pfilename, errno);
-    return;
-  }
-#endif /* PMAP_T_SAFE_MODE */
+  pmap_fopen(fh, pfilename, "w", errno);
 
   for (int i = 0; i < pmap->n; ++i) {
     fprintf(fh, PMAP_T_STR_MASK "\n", pmap->p[i].key, pmap->p[i].value);

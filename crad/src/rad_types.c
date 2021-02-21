@@ -27,6 +27,39 @@
 #define LM_LEVEL 3
 #include "logger.h"
 
+#if RAD_SAFE_MODE
+
+#define rad_fopen(fh, filename, modes, errno)                                  \
+  fh = fopen(filename, modes);                                                 \
+  if (!fh) {                                                                   \
+    LOGE("Failed to open '%s' with errno %d", filename, errno);                \
+    return;                                                                    \
+  }
+
+#define rad_fread(ptr, size, n, stream, filename, errno)                       \
+  if (fread(ptr, size, n, stream) != n) {                                      \
+    LOGE("Failed to read data from file '%s' with errno %d", filename, errno); \
+    return;                                                                    \
+  }
+
+#define rad_fwrite(ptr, size, n, stream, filename, errno)                      \
+  if (fwrite(ptr, size, n, stream) != n) {                                     \
+    LOGE("Failed to write data to file '%s' with errno %d", filename, errno);  \
+    return;                                                                    \
+  }
+
+#else
+
+#define rad_fopen(fh, filename, modes, errno) fh = fopen(filename, modes);
+
+#define rad_fread(ptr, size, n, stream, filename, errno)                       \
+  fread(ptr, size, n, stream)
+
+#define rad_fwrite(ptr, size, n, stream, filename, errno)                      \
+  fwrite(ptr, size, n, stream)
+
+#endif /* RAD_SAFE_MODE */
+
 void set_model_callbacks(model_t *m, const objpart_t *objparts) {
   m->util = objparts[0];
   m->cost = objparts[1];
@@ -118,13 +151,7 @@ void solution_init(sol_t *s, const struct pmap_st *pmap) {
 
 void save_head(const char *filename) {
   FILE *fh = NULL;
-  fh = fopen(filename, "w");
-#if RAD_SAFE_MODE
-  if (!fh) {
-    LOGE("Failed to create header file '%s' with errno %d", filename, errno);
-    return;
-  }
-#endif /* RAD_SAFE_MODE */
+  rad_fopen(fh, filename, "w", errno);
 
 #if defined(__unix__) || defined(__APPLE__)
   char hostname[HOST_NAME_MAX];
@@ -194,24 +221,8 @@ void model_load(model_t *m, const char *model_path, const objpart_t *objparts) {
            "%s" CCM_FILE_SYSTEM_SEP "%s" CCM_FILE_SYSTEM_SEP "model",
            RAD_TEMP_DIR, model_path);
   FILE *fh = NULL;
-  fh = fopen(filename, "rb");
-#if RAD_SAFE_MODE
-  if (!fh) {
-    LOGE("Failed to open model file '%s' with errno %d", filename, errno);
-    return;
-  }
-
-  if (
-#endif /* RAD_SAFE_MODE */
-      fread(m, sizeof(*m), 1, fh)
-#if RAD_SAFE_MODE
-      != 1) {
-    LOGE("Failed to read data from model file '%s' with errno %d", filename,
-         errno);
-    return;
-  }
-#endif /* RAD_SAFE_MODE */
-  ;
+  rad_fopen(fh, filename, "rb", errno);
+  rad_fread(m, sizeof(*m), 1, fh, filename, errno);
   fclose(fh);
 
   set_model_callbacks(m, objparts);
@@ -236,14 +247,8 @@ void model_save(const model_t *m, const char *model_path) {
            "%s" CCM_FILE_SYSTEM_SEP "%s" CCM_FILE_SYSTEM_SEP "model",
            RAD_TEMP_DIR, model_path);
   FILE *fh = NULL;
-  fh = fopen(filename, "wb");
-#if RAD_SAFE_MODE
-  if (!fh) {
-    LOGE("Failed to create model file '%s' with errno %d", filename, errno);
-    return;
-  }
-#endif /* RAD_SAFE_MODE */
-  fwrite(m, sizeof(*m), 1, fh);
+  rad_fopen(fh, filename, "wb", errno);
+  rad_fwrite(m, sizeof(*m), 1, fh, filename, errno);
   fclose(fh);
 
   pmap_t pmap = {.p = NULL, .n = 0};
@@ -261,53 +266,14 @@ void load_variable2(double ***var, const char *filename) {
   FILE *fh = NULL;
   short d1, d2;
 
-  fh = fopen(filename, "rb");
-#if RAD_SAFE_MODE
-  if (!fh) {
-    LOGE("Failed to open variable file '%s' with errno %d", filename, errno);
-    return;
-  }
-
-  if (
-#endif /* RAD_SAFE_MODE */
-      fread(&d1, sizeof(short), 1, fh)
-#if RAD_SAFE_MODE
-      != 1) {
-    LOGE("Failed to read data from model file '%s' with errno %d", filename,
-         errno);
-    return;
-  }
-#endif /* RAD_SAFE_MODE */
-  ;
-
-#if RAD_SAFE_MODE
-  if (
-#endif /* RAD_SAFE_MODE */
-      fread(&d2, sizeof(short), 1, fh)
-#if RAD_SAFE_MODE
-      != 1) {
-    LOGE("Failed to read data from model file '%s' with errno %d", filename,
-         errno);
-    return;
-  }
-#endif /* RAD_SAFE_MODE */
-  ;
+  rad_fopen(fh, filename, "rb", errno);
+  rad_fread(&d1, sizeof(short), 1, fh, filename, errno);
+  rad_fread(&d2, sizeof(short), 1, fh, filename, errno);
 
   *var = (double **)malloc(sizeof(double *) * d1);
   for (int i1 = 0; i1 < d1; ++i1) {
     (*var)[i1] = (double *)malloc(sizeof(double) * d2);
-#if RAD_SAFE_MODE
-    if (
-#endif /* RAD_SAFE_MODE */
-        fread((*var)[i1], sizeof(double), d2, fh)
-#if RAD_SAFE_MODE
-        != d2) {
-      LOGE("Failed to read data from model file '%s' with errno %d", filename,
-           errno);
-      return;
-    }
-#endif /* RAD_SAFE_MODE */
-    ;
+    rad_fread((*var)[i1], sizeof(double), d2, fh, filename, errno);
   }
 
   fclose(fh);
@@ -329,28 +295,11 @@ void load_variable2(double ***var, const char *filename) {
 void save_variable2(short d1, short d2, double **const var,
                     const char *filename) {
   FILE *fh = NULL;
-  fh = fopen(filename, "wb");
-#if RAD_SAFE_MODE
-  if (!fh) {
-    LOGE("Failed to create variable file '%s' with errno %d", filename, errno);
-    return;
-  }
-  size_t wc;
-#endif /* RAD_SAFE_MODE */
-
-  fwrite(&d1, sizeof(d1), 1, fh);
-  fwrite(&d2, sizeof(d2), 1, fh);
+  rad_fopen(fh, filename, "wb", errno);
+  rad_fwrite(&d1, sizeof(d1), 1, fh, filename, errno);
+  rad_fwrite(&d2, sizeof(d2), 1, fh, filename, errno);
   for (int i1 = 0; i1 < d1; ++i1) {
-#if RAD_SAFE_MODE
-    wc =
-#endif /* RAD_SAFE_MODE */
-        fwrite(var[i1], sizeof(double), d2, fh);
-#if RAD_SAFE_MODE
-    if (wc != d2) {
-      LOGE("Failed to write to file '%s' with return value %zd", filename, wc);
-      return;
-    }
-#endif /* RAD_SAFE_MODE */
+    rad_fwrite(var[i1], sizeof(double), d2, fh, filename, errno);
   }
 
   fclose(fh);
@@ -374,24 +323,8 @@ void solution_load(sol_t *s, const char *model_path) {
            "%s" CCM_FILE_SYSTEM_SEP "%s" CCM_FILE_SYSTEM_SEP "solution",
            RAD_TEMP_DIR, model_path);
   FILE *fh = NULL;
-  fh = fopen(filename, "rb");
-#if RAD_SAFE_MODE
-  if (!fh) {
-    LOGE("Failed to open solution file '%s' with errno %d", filename, errno);
-    return;
-  }
-
-  if (
-#endif /* RAD_SAFE_MODE */
-      fread(s, sizeof(*s), 1, fh)
-#if RAD_SAFE_MODE
-      != 1) {
-    LOGE("Failed to read data from model file '%s' with errno %d", filename,
-         errno);
-    return;
-  }
-#endif /* RAD_SAFE_MODE */
-  ;
+  rad_fopen(fh, filename, "rb", errno);
+  rad_fread(s, sizeof(*s), 1, fh, filename, errno);
 
   fclose(fh);
 
@@ -501,14 +434,8 @@ void solution_save(const sol_t *s, const char *model_path) {
            "%s" CCM_FILE_SYSTEM_SEP "%s" CCM_FILE_SYSTEM_SEP "solution",
            RAD_TEMP_DIR, model_path);
   FILE *fh = NULL;
-  fh = fopen(filename, "wb");
-#if RAD_SAFE_MODE
-  if (!fh) {
-    LOGE("Failed to create solution file '%s' with errno %d", filename, errno);
-    return;
-  }
-#endif /* RAD_SAFE_MODE */
-  fwrite(s, sizeof(*s), 1, fh);
+  rad_fopen(fh, filename, "wb", errno);
+  rad_fwrite(s, sizeof(*s), 1, fh, filename, errno);
   fclose(fh);
 }
 

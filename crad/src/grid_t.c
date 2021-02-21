@@ -15,6 +15,39 @@
 #define GRID_T_INIT_STR_MASK "%d, %lf, %lf, %lf"
 #endif
 
+#if GRID_SAFE_MODE
+
+#define grid_fopen(fh, filename, modes, errno)                                 \
+  fh = fopen(filename, modes);                                                 \
+  if (!fh) {                                                                   \
+    LOGE("Failed to open '%s' with errno %d", filename, errno);                \
+    return errno;                                                              \
+  }
+
+#define grid_fread(ptr, size, n, stream, filename, errno)                      \
+  if (fread(ptr, size, n, stream) != n) {                                      \
+    LOGE("Failed to read data from file '%s' with errno %d", filename, errno); \
+    return;                                                                    \
+  }
+
+#define grid_fwrite(ptr, size, n, stream, filename, errno)                     \
+  if (fwrite(ptr, size, n, stream) != n) {                                     \
+    LOGE("Failed to write data to file '%s' with errno %d", filename, errno);  \
+    return;                                                                    \
+  }
+
+#else
+
+#define grid_fopen(fh, filename, modes, errno) fh = fopen(filename, modes);
+
+#define grid_fread(ptr, size, n, stream, filename, errno)                      \
+  fread(ptr, size, n, stream)
+
+#define grid_fwrite(ptr, size, n, stream, filename, errno)                     \
+  fwrite(ptr, size, n, stream)
+
+#endif /* RAD_SAFE_MODE */
+
 void alloc_grid(grid_t *g) {
   g->d = (double *)malloc(sizeof(double) * (g->n));
 #ifdef GRID_T_SAFE_MODE
@@ -126,16 +159,10 @@ void grid_calc(grid_t *g) {
  * open the output file. */
 int grid_save(const grid_t *g, const char *filename) {
   FILE *fh = NULL;
-  fh = fopen(filename, "wb");
-#ifdef GRID_T_SAFE_MODE
-  if (!fh) {
-    LOGE("Failed to create '%f' with errno %d", filename, errno);
-    return errno;
-  }
-#endif
-  fwrite(&g->n, sizeof(g->n), 1, fh);
-  fwrite(&g->w, sizeof(g->w), 1, fh);
-  fwrite(g->d, sizeof(g->m), g->n, fh);
+  grid_fopen(fh, filename, "wb", errno);
+  grid_fwrite(&g->n, sizeof(g->n), 1, fh, filename, errno);
+  grid_fwrite(&g->w, sizeof(g->w), 1, fh, filename, errno);
+  grid_fwrite(g->d, sizeof(g->m), g->n, fh, filename, errno);
   fclose(fh);
 
   return 0;
@@ -151,53 +178,13 @@ int grid_save(const grid_t *g, const char *filename) {
  * open the input file. */
 int grid_load(grid_t *g, const char *filename) {
   FILE *fh = NULL;
-  fh = fopen(filename, "rb");
-
-#ifdef GRID_T_SAFE_MODE
-  if (!fh) {
-    LOGE("Failed to open '%f' with errno %d", filename, errno);
-    return errno;
-  }
-
-  if (
-#endif /* GRID_T_SAFE_MODE */
-      fread(&g->n, sizeof(g->n), 1, fh)
-#if GRID_T_SAFE_MODE
-      != 1) {
-    LOGE("Failed to read data from grid file '%s' with errno %d", filename,
-         errno);
-    return errno;
-  }
-#endif /* GRID_T_SAFE_MODE */
-  ;
-
-#if GRID_T_SAFE_MODE
-  if (
-#endif /* GRID_T_SAFE_MODE */
-      fread(&g->w, sizeof(g->w), 1, fh)
-#if GRID_T_SAFE_MODE
-      != 1) {
-    LOGE("Failed to read data from grid file '%s' with errno %d", filename,
-         errno);
-    return errno;
-  }
-#endif /* GRID_T_SAFE_MODE */
-  ;
+  grid_fopen(fh, filename, "rb", errno);
+  grid_fread(&g->n, sizeof(g->n), 1, fh, filename, errno);
+  grid_fread(&g->w, sizeof(g->w), 1, fh, filename, errno);
 
   if (g->n > 0) {
     alloc_grid(g);
-#if GRID_T_SAFE_MODE
-    if (
-#endif /* GRID_T_SAFE_MODE */
-        fread(g->d, sizeof(g->m), g->n, fh)
-#if GRID_T_SAFE_MODE
-        != g->n) {
-      LOGE("Failed to read data from grid file '%s' with errno %d", filename,
-           errno);
-      return errno;
-    }
-#endif /* GRID_T_SAFE_MODE */
-    ;
+    grid_fread(g->d, sizeof(g->m), g->n, fh, filename, errno);
     g->m = g->d[0];
     g->M = g->d[g->n - 1];
   }
