@@ -65,8 +65,9 @@ file(MAKE_DIRECTORY ${PROJECT_TEMP_DIR})
 file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 # threading configuration
-check_include_file("threads.h" HAVE_THREADS)
-if(${HAVE_THREADS})
+find_package(Threads)
+check_include_file("threads.h" THREADS_FOUND)
+if(${THREADS_FOUND})
   if(NOT DEFINED PROJECT_NUM_THREADS)
     # find available processors
     include(ProcessorCount)
