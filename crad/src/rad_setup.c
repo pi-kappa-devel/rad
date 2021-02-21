@@ -16,6 +16,8 @@
 
 #if RAD_NUM_THREADS > 0
 #include "threads.h"
+#else
+typedef int (*thrd_start_t)(void*);
 #endif
 
 #if defined(__unix__) || defined(__APPLE__)
@@ -248,27 +250,39 @@ void copybufs(thread_init_t *td) {
 }
 
 void lock_mutex(thread_init_t *td) {
+#if RAD_NUM_THREADS > 0
   mtx_lock(&td->u->c->mtx);
+#endif
 }
 
 void wait_next_ready(thread_init_t *td) {
+#if RAD_NUM_THREADS > 0
   cnd_wait(&td->u->c->next_ready, &td->u->c->mtx);
+#endif
 }
 
 void wait_it_done(thread_init_t *td) {
+#if RAD_NUM_THREADS > 0
   cnd_wait(&td->u->c->it_done, &td->u->c->mtx);
+#endif
 }
 
 void signal_done(thread_init_t *td) {
+#if RAD_NUM_THREADS > 0
   cnd_signal(&td->u->c->it_done);
+#endif
 }
 
 void broadcast_ready(thread_init_t *td) {
+#if RAD_NUM_THREADS > 0
   cnd_broadcast(&td->u->c->next_ready);
+#endif
 }
 
 void unlock_mutex(thread_init_t *td) {
+#if RAD_NUM_THREADS > 0
   mtx_unlock(&td->u->c->mtx);
+#endif
 }
 
 void worker_sync(thread_init_t *td) {
@@ -327,9 +341,10 @@ int thread_start(void *vtd) {
   // The worker's data are dynamically allocated. Main's data is not,
   // thus this cannot be part of free_thread_init()
   free(td);
-#endif /* RAD_NUM_THREADS */
-
   thrd_exit(EXIT_SUCCESS);
+#else
+  return EXIT_SUCCESS;
+#endif /* RAD_NUM_THREADS */  
 }
 
 int thread_resume(void *vtd) {
@@ -352,9 +367,12 @@ int thread_resume(void *vtd) {
   // The worrke's data are dynamically allocated. Main's data is not,
   // thus this cannot be part of free_thread_init()
   free(td);
-#endif /* RAD_NUM_THREADS */
 
   thrd_exit(EXIT_SUCCESS);
+#else
+  return EXIT_SUCCESS;
+#endif /* RAD_NUM_THREADS */
+
 }
 
 /** Initialize pipeline
@@ -401,13 +419,17 @@ void init_pipeline(setup_t *u) {
 }
 
 int join_thread(const setup_t *u, int i) {
+#if RAD_NUM_THREADS > 0
   return thrd_join(u->c->w[i].thread, NULL);
+#endif
 }
 
 void free_sync_resources(setup_t *u) {
+#if RAD_NUM_THREADS > 0
   cnd_destroy(&u->c->next_ready);
   cnd_destroy(&u->c->it_done);
   mtx_destroy(&u->c->mtx);
+#endif
 }
 
 void join_all_threads(const setup_t *u) {
@@ -444,17 +466,21 @@ void setup_save(const setup_t *u, const char *setup_path) {
 }
 
 void init_sync_resources(setup_t *u) {
+#if RAD_NUM_THREADS > 0
   mtx_init(&u->c->mtx, mtx_plain);
   cnd_init(&u->c->it_done);
   cnd_init(&u->c->next_ready);
 
   u->c->it_done_count = 0;
   u->c->is_next_ready = false;
+#endif
 }
 
 void create_thread(thread_init_t *td, int i, thrd_start_t thread_main) {
   int status = 0;
+#if RAD_NUM_THREADS > 0
   status = thrd_create(&td->u->c->w[i].thread, thread_main, td);
+#endif
 
   if (status != 0) {
     LOGE("Failed to create thread %d", status);

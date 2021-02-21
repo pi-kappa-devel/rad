@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 3.6)
+include(CheckIncludeFile)
 
 ## project details
 project(rad VERSION 1.5.0 LANGUAGES C)
@@ -63,10 +64,9 @@ file(MAKE_DIRECTORY ${PROJECT_DATA_DIR})
 file(MAKE_DIRECTORY ${PROJECT_TEMP_DIR})
 file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
-## libraries
 # threading configuration
-find_package(Threads)
-if(${THREADS_FOUND})
+check_include_file("threads.h" HAVE_THREADS)
+if(${HAVE_THREADS})
   if(NOT DEFINED PROJECT_NUM_THREADS)
     # find available processors
     include(ProcessorCount)
