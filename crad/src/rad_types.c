@@ -200,8 +200,18 @@ void model_load(model_t *m, const char *model_path, const objpart_t *objparts) {
     LOGE("Failed to open model file '%s' with errno %d", filename, errno);
     return;
   }
+
+  if (
 #endif /* RAD_SAFE_MODE */
-  fread(m, sizeof(*m), 1, fh);
+      fread(m, sizeof(*m), 1, fh)
+#if RAD_SAFE_MODE
+      != 1) {
+    LOGE("Failed to read data from model file '%s' with errno %d", filename,
+         errno);
+    return;
+  }
+#endif /* RAD_SAFE_MODE */
+  ;
   fclose(fh);
 
   set_model_callbacks(m, objparts);
@@ -249,21 +259,55 @@ void model_save(const model_t *m, const char *model_path) {
 
 void load_variable2(double ***var, const char *filename) {
   FILE *fh = NULL;
+  short d1, d2;
+
   fh = fopen(filename, "rb");
 #if RAD_SAFE_MODE
   if (!fh) {
     LOGE("Failed to open variable file '%s' with errno %d", filename, errno);
     return;
   }
-#endif /* RAD_SAFE_MODE */
 
-  short d1, d2;
-  fread(&d1, sizeof(short), 1, fh);
-  fread(&d2, sizeof(short), 1, fh);
+  if (
+#endif /* RAD_SAFE_MODE */
+      fread(&d1, sizeof(short), 1, fh)
+#if RAD_SAFE_MODE
+      != 1) {
+    LOGE("Failed to read data from model file '%s' with errno %d", filename,
+         errno);
+    return;
+  }
+#endif /* RAD_SAFE_MODE */
+  ;
+
+#if RAD_SAFE_MODE
+  if (
+#endif /* RAD_SAFE_MODE */
+      fread(&d2, sizeof(short), 1, fh)
+#if RAD_SAFE_MODE
+      != 1) {
+    LOGE("Failed to read data from model file '%s' with errno %d", filename,
+         errno);
+    return;
+  }
+#endif /* RAD_SAFE_MODE */
+  ;
+
   *var = (double **)malloc(sizeof(double *) * d1);
   for (int i1 = 0; i1 < d1; ++i1) {
     (*var)[i1] = (double *)malloc(sizeof(double) * d2);
-    fread((*var)[i1], sizeof(double), d2, fh);
+#if RAD_SAFE_MODE
+    if (
+#endif /* RAD_SAFE_MODE */
+        fread((*var)[i1], sizeof(double), d2, fh)
+#if RAD_SAFE_MODE
+        != d2) {
+      LOGE("Failed to read data from model file '%s' with errno %d", filename,
+           errno);
+      return;
+    }
+#endif /* RAD_SAFE_MODE */
+    ;
   }
 
   fclose(fh);
@@ -336,8 +380,19 @@ void solution_load(sol_t *s, const char *model_path) {
     LOGE("Failed to open solution file '%s' with errno %d", filename, errno);
     return;
   }
+
+  if (
 #endif /* RAD_SAFE_MODE */
-  fread(s, sizeof(*s), 1, fh);
+      fread(s, sizeof(*s), 1, fh)
+#if RAD_SAFE_MODE
+      != 1) {
+    LOGE("Failed to read data from model file '%s' with errno %d", filename,
+         errno);
+    return;
+  }
+#endif /* RAD_SAFE_MODE */
+  ;
+
   fclose(fh);
 
 #define loadg(gname)                                                           \
