@@ -421,6 +421,8 @@ void init_pipeline(setup_t *u) {
 int join_thread(const setup_t *u, int i) {
 #if RAD_NUM_THREADS > 0
   return thrd_join(u->c->w[i].thread, NULL);
+#else
+  return EXIT_SUCCESS;
 #endif
 }
 

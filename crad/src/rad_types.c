@@ -16,9 +16,13 @@
 #if defined(__unix__) || defined(__APPLE__)
 #include "sys/stat.h"
 #include "unistd.h"
+#if __APPLE__
+#define HOST_NAME_MAX 64
+#define LOGIN_NAME_MAX 256
+#endif /* __APPLE__ */
 #else
 #include "winsock2.h"
-#endif
+#endif /* __unix__ || __APPLE__ */
 
 #define LM_LEVEL 3
 #include "logger.h"
