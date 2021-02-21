@@ -13,7 +13,7 @@
 #include "string.h"
 #include "time.h"
 
-#if __unix__
+#if defined(__unix__) || defined(__APPLE__)
 #include "sys/stat.h"
 #include "unistd.h"
 #else
@@ -122,7 +122,7 @@ void save_head(const char *filename) {
   }
 #endif /* RAD_SAFE_MODE */
 
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
   char hostname[HOST_NAME_MAX];
   char username[LOGIN_NAME_MAX];
   gethostname(hostname, HOST_NAME_MAX);

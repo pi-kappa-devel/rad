@@ -8,13 +8,13 @@
 #define _LOGGER_MACROS_H_
 
 /* Environment dependent configurations */
-#ifdef __unix__
+#if defined(__unix__) || defined(__APPLE__)
 #define lock_output_buffer(buffer) flockfile(buffer)
 #define unlock_output_buffer(buffer) funlockfile(buffer)
 #else
 #define lock_output_buffer(buffer) _lock_file(buffer)
 #define unlock_output_buffer(buffer) _unlock_file(buffer)
-#endif /* __unix__ */
+#endif /* __unix__ || __APPLE__ */
 
 /* Create log mode strings */
 #define _LOG_ERROR_TAG "Error         : "

@@ -18,7 +18,7 @@
 #include "threads.h"
 #endif
 
-#if __unix__
+#if defined(__unix__) || defined(__APPLE__)
 #include "dirent.h"
 #endif
 
@@ -761,7 +761,7 @@ int setup_resume(setup_t *u) {
  * @return Zero on success and non-zero otherwise */
 int setup_find_last_saved(char *save_point) {
   char dir_path[RAD_PATH_BUFFER_SZ];
-#if __unix__
+#if defined(__unix__) || defined(__APPLE__)
   DIR *dir;
   struct dirent *ent, *last = NULL;
 

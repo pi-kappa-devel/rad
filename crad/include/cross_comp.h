@@ -29,7 +29,7 @@ int mkdirp_w(const char *path);
 #else
 #error Operating system is not supported.
 
-#endif /* __unix__ */
+#endif /* __unix__ || __APPLE__ */
 
 /* Stringification macros */
 
