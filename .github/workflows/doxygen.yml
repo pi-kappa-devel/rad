@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
             
-      - name: Install doxygen
+      - name: Install System Dependencies
         run: |
           sudo apt-get install doxygen pdflatex
         shell: bash
