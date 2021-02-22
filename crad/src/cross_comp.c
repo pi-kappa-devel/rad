@@ -1,14 +1,23 @@
 #include "cross_comp.h"
 
-#include "limits.h"
-#include "stdio.h"
-#include "string.h"
-
 #if defined(__unix__) || defined(__APPLE__)
 
 #include "sys/stat.h"
 #include "sys/types.h"
 #include "unistd.h"
+
+#else
+
+#include "Shlobj.h"
+#include "Shlobj_core.h"
+
+#endif /* __unix__ || __APPLE__ */
+
+#include "limits.h"
+#include "stdio.h"
+#include "string.h"
+
+#if defined(__unix__) || defined(__APPLE__)
 
 /** @brief Make multiple directories
  * @details Creates the directories of the passed path that do not
@@ -35,9 +44,6 @@ int mkdirp(const char *path, int mode) {
 
 #else
 
-#include "Shlobj.h"
-#include "Shlobj_core.h"
-
 /** @brief Make multiple directories
  * @details Creates the directories of the passed path that do not
  * already exist in the file system.
@@ -45,4 +51,4 @@ int mkdirp(const char *path, int mode) {
  * @return Zero if success, an error status code otherwise. */
 int mkdirp_w(const char *path) { return SHCreateDirectoryEx(NULL, path, NULL); }
 
-#endif
+#endif /* __unix__ || __APPLE__ */
