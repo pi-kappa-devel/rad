@@ -15,6 +15,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+            
+      - name: Install doxygen
+        run: |
+          sudo apt-get install doxygen
+        shell: bash
       
       - name: Create Build Environment
         run: cmake -E make_directory ${{github.workspace}}/build
