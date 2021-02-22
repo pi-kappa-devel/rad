@@ -18,7 +18,7 @@ jobs:
             
       - name: Install doxygen
         run: |
-          sudo apt-get install doxygen
+          sudo apt-get install doxygen pdflatex
         shell: bash
       
       - name: Create Build Environment
