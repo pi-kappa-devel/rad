@@ -18,7 +18,7 @@ jobs:
             
       - name: Install System Dependencies
         run: |
-          sudo apt-get install doxygen texlive-latex-recommended
+          sudo apt-get install doxygen texlive-latex-extra
         shell: bash
       
       - name: Create Build Environment
