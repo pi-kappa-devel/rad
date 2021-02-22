@@ -1,0 +1,49 @@
+on:
+  push:
+    branches:
+      - main
+      - master
+
+name: doxygen
+
+jobs:
+  doxygen:
+    runs-on: ubuntu-18.04
+    env:
+      RSPM: https://packagemanager.rstudio.com/cran/__linux__/bionic/latest
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Create Build Environment
+        run: cmake -E make_directory ${{github.workspace}}/build
+
+      - name: Configure CMake
+        shell: bash
+        working-directory: ${{github.workspace}}/build
+        run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+
+      - name: Build
+        working-directory: ${{github.workspace}}/build
+        shell: bash
+        run: cmake --build . --config $BUILD_TYPE
+
+      - name: Install doxygen
+        run: |
+          apt-get install doxygen
+        shell: bash
+
+      - name: Build documentation
+        working-directory: ${{github.workspace}}/build
+        run: make rad_doc
+        shell: bash
+          
+      - name: Sync files
+        uses: SamKirkland/FTP-Deploy-Action@4.0.0
+        with:
+          server: ${{ secrets.ftp_server }}
+          username: ${{ secrets.ftp_username }}
+          password: ${{ secrets.ftp_password }}
+          local-dir: docs/
+          server-dir: ${{ secrets.ftp_server_dir }}
