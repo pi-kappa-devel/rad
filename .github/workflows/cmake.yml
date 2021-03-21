@@ -44,7 +44,7 @@ jobs:
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
       # We'll use this as our working directory for all subsequent commands
-      run: cmake -E make_directory ${{github.workspace}}/build/$BUILD_TYPE
+      run: cmake -E make_directory ${{github.workspace}}/build -DGRID_T_SAFE_MODE=1 -DPMAP_T_SAFE_MODE=1 -DRAD_DEBUG=1
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
@@ -60,7 +60,7 @@ jobs:
       working-directory: ${{github.workspace}}/build
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake -DGRID_T_SAFE_MODE=1 -DPMAP_T_SAFE_MODE=1 -DRAD_DEBUG=1 --build . --config $BUILD_TYPE
+      run: cmake --build . --config $BUILD_TYPE
 
     - name: Test
       working-directory: ${{github.workspace}}/build
