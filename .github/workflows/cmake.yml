@@ -60,7 +60,7 @@ jobs:
       working-directory: ${{github.workspace}}/build
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake --build . --config $BUILD_TYPE -DGRID_T_SAFE_MODE=1 -DPMAP_T_SAFE_MODE=1 -DRAD_DEBUG=1
+      run: cmake -DGRID_T_SAFE_MODE=1 -DPMAP_T_SAFE_MODE=1 -DRAD_DEBUG=1 --build . --config $BUILD_TYPE
 
     - name: Test
       working-directory: ${{github.workspace}}/build
