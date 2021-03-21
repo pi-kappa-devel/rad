@@ -22,6 +22,8 @@ typedef int (*thrd_start_t)(void*);
 
 #if defined(__unix__) || defined(__APPLE__)
 #include "dirent.h"
+#else
+#include "windows.h"
 #endif
 
 #define LM_LEVEL 6

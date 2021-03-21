@@ -13,6 +13,7 @@
 #########################################
 bin/*
 docs/*
+out/*
 *_conf.h
 *_conf.py
 prad/*.html
@@ -21,6 +22,7 @@ prad/*.html
 # temp files
 #########################################
 .clangd/*
+.vs/*
 build/*
 tmp/*
 *~
