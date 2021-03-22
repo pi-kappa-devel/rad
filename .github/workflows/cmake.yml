@@ -14,16 +14,16 @@ jobs:
   build:
     runs-on: ${{ matrix.config.os }}
 
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+    name: ${{ matrix.config.os }}
 
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: windows-latest, r: 'release'} 
-          - {os: macOS-latest, r: 'release'}
-          - {os: ubuntu-20.04, r: 'release', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
-          - {os: ubuntu-20.04, r: 'devel', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
+          - {os: windows-latest, sdk: '10.0.18362.0'} 
+          - {os: macOS-latest}
+          - {os: ubuntu-20.04}
+          - {os: ubuntu-20.04}
     
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -53,8 +53,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DGRID_T_SAFE_MODE=1 -DPMAP_T_SAFE_MODE=1 -DRAD_DEBUG=1
-
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
     - name: Build
       working-directory: ${{github.workspace}}/build
       shell: bash
