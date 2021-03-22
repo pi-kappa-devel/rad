@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: windows-latest, sdk: '10.0.18362.0'} 
+          - {os: windows-2016} 
           - {os: macOS-latest}
           - {os: ubuntu-20.04}
           - {os: ubuntu-20.04}
